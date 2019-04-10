@@ -1,46 +1,48 @@
 """
-设计模式 - 策略模式(指定的策略不同执行的算法不同)
+递归回溯法：叫称为试探法，按选优条件向前搜索，当搜索到某一步，
+发现原先选择并不优或达不到目标时，就退回一步重新选择。
+经典问题：骑士巡逻
 """
-from hashlib import md5
-from hashlib import sha1
-from hashlib import sha256
-from hashlib import sha512
+import os
+import sys
+import time
+
+SIZE = 5
+total = 0
 
 
-class StreamHasher():
-    """哈希摘要生成器"""
+def print_board(board):
+    # os.system('clear')
+    for row in board:
+        for col in row:
+            print(str(col).center(4), end='')
+        print()
 
-    def __init__(self, algorithm='md5', size=1024):
-        self.size = size
-        alg = algorithm.lower()
-        if alg == 'md5':
-            self.hasher = md5()
-        elif alg == 'sha1':
-            self.hasher = sha1()
-        elif alg == 'sha256':
-            self.hasher = sha256()
-        elif alg == 'sha512':
-            self.hasher = sha512()
-        else:
-            raise ValueError('不支持指定的摘要算法')
 
-    # 魔法方法: 让对象可以像函数一样被调用
-    def __call__(self, stream):
-        return self.to_digest(stream)
-
-    def to_digest(self, stream):
-        """生成十六进制形式的哈希摘要字符串"""
-        for data in iter(lambda: stream.read(self.size), b''):
-            self.hasher.update(data)
-        return self.hasher.hexdigest()
+def patrol(board, row, col, step=1):
+    if row >= 0 and row < SIZE and \
+        col >= 0 and col < SIZE and \
+        board[row][col] == 0:
+        board[row][col] = step
+        if step == SIZE * SIZE:
+            global total
+            total += 1
+            print(f'第{total}种走法: ')
+            print_board(board)
+        patrol(board, row - 2, col - 1, step + 1)
+        patrol(board, row - 1, col - 2, step + 1)
+        patrol(board, row + 1, col - 2, step + 1)
+        patrol(board, row + 2, col - 1, step + 1)
+        patrol(board, row + 2, col + 1, step + 1)
+        patrol(board, row + 1, col + 2, step + 1)
+        patrol(board, row - 1, col + 2, step + 1)
+        patrol(board, row - 2, col + 1, step + 1)
+        board[row][col] = 0
 
 
 def main():
-    """主函数"""
-    hasher = StreamHasher('sha1', 4096)
-    with open('Python语言规范.pdf', 'rb') as stream:
-        # print(hasher.to_digest(stream))
-        print(hasher(stream))
+    board = [[0] * SIZE for _ in range(SIZE)]
+    patrol(board, SIZE - 1, SIZE - 1)
 
 
 if __name__ == '__main__':

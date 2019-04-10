@@ -1,45 +1,65 @@
 """
-协程 - 可以通过yield来调用其它协程，yield将执行权转让给其他协程
-协程之间不是调用者与被调用者的关系，而是彼此对称平等的
+面向对象的三大支柱：封装、继承、多态
+面向对象的设计原则：SOLID原则
+面向对象的设计模式：GoF设计模式（单例、工厂、代理、策略、迭代器）
+月薪结算系统 - 部门经理每月15000 程序员每小时200 销售员1800底薪加销售额5%提成
 """
+from abc import ABCMeta, abstractmethod
 
 
-def num_generator(start, end):
-    """指定起始值的整数生成器"""
-    for num in range(start, end + 1):
-        yield num
+class Employee(metaclass=ABCMeta):
+    """员工(抽象类)"""
+
+    def __init__(self, name):
+        self.name = name
+
+    @abstractmethod
+    def get_salary(self):
+        """结算月薪(抽象方法)"""
+        pass
 
 
-def square_mapper(numbers):
-    """将数值映射为其平方的协程"""
-    for num in numbers:
-        yield num ** 2
+class Manager(Employee):
+    """部门经理"""
+
+    def get_salary(self):
+        return 15000.0
 
 
-def prime_filter(numbers):
-    """从数值中过滤出素数的协程"""
-    for num in numbers:
-        flag = True
-        for factor in range(2, int(num ** 0.5 + 1)):
-            if num % factor == 0:
-                flag = False
-                break
-        if flag:
-            yield num
+class Programmer(Employee):
+    """程序员"""
+
+    def __init__(self, name, working_hour=0):
+        self.working_hour = working_hour
+        super().__init__(name)
+
+    def get_salary(self):
+        return 200.0 * self.working_hour
 
 
-def main():
-    tasks = []
-    tasks.append(square_mapper(num_generator(1, 100)))
-    tasks.append(prime_filter(num_generator(2, 100)))
-    for _ in range(100):
-        for task in tasks:
-            print(f'切换到任务{task.__name__} => ', end='')
-            try:
-                print(task.__next__())
-            except StopIteration as error:
-                print(error)
+class Salesman(Employee):
+    """销售员"""
+
+    def __init__(self, name, sales=0.0):
+        self.sales = sales
+        super().__init__(name)
+
+    def get_salary(self):
+        return 1800.0 + self.sales * 0.05
 
 
-if __name__ == '__main__':
-    main()
+class EmployeeFactory():
+    """创建员工的工厂（工厂模式 - 通过工厂实现对象使用者和对象之间的解耦合）"""
+
+    @staticmethod
+    def create(emp_type, *args, **kwargs):
+        """创建员工"""
+        emp_type = emp_type.upper()
+        emp = None
+        if emp_type == 'M':
+            emp = Manager(*args, **kwargs)
+        elif emp_type == 'P':
+            emp = Programmer(*args, **kwargs)
+        elif emp_type == 'S':
+            emp = Salesman(*args, **kwargs)
+        return emp

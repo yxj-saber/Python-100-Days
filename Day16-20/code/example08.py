@@ -1,45 +1,52 @@
 """
-设计模式 - 单例模式(让一个类只能创建唯一的实例)
+加密和解密
+对称加密 - 加密和解密是同一个密钥 - DES / AES
+非对称加密 - 加密和解密是不同的密钥 - RSA
+pip install pycrypto
 """
-from functools import wraps
+import base64
 
+from hashlib import md5
 
-def singleton(cls):
-    instances = {}
+from Crypto.Cipher import AES
+from Crypto import Random
+from Crypto.PublicKey import RSA
 
-    @wraps(cls)
-    def wrapper(*args, **kwargs):
-        if cls not in instances:
-            instances[cls] = cls(*args, **kwargs)
-        return instances[cls]
-
-    return wrapper
-
-
-@singleton
-class President():
-    """总统(单例类)"""
-
-    def __init__(self, name):
-        self.name = name
+# # AES加密的密钥（长度32个字节）
+# key = md5(b'1qaz2wsx').hexdigest()
+# # AES加密的初始向量（随机生成）
+# iv = Random.new().read(AES.block_size)
 
 
 def main():
-    p1 = President("王大锤")
-    p2 = President("奥巴马")
-    print(p1.name)
-    print(p2.name)
-    print(p1 == p2)
-    print(p1 is p2)
-    print('-' * 30)
-    # 取消装饰器
-    President2 = President.__wrapped__
-    p2 = President2("奥巴马")
-    print(p1.name)
-    print(p2.name)
-    print(p1 == p2)
-    print(p1 is p2)
-
+    """主函数"""
+    # 生成密钥对
+    key_pair = RSA.generate(1024)
+    # 导入公钥
+    pub_key = RSA.importKey(key_pair.publickey().exportKey())
+    # 导入私钥
+    pri_key = RSA.importKey(key_pair.exportKey())
+    message1 = 'hello, world!'
+    # 加密数据
+    data = pub_key.encrypt(message1.encode(), None)
+    # 对加密数据进行BASE64编码
+    message2 = base64.b64encode(data[0])
+    print(message2)
+    # 对加密数据进行BASE64解码
+    data = base64.b64decode(message2)
+    # 解密数据
+    message3 = pri_key.decrypt(data)
+    print(message3.decode())
+    # # AES - 对称加密
+    # str1 = '我爱你们！'
+    # cipher = AES.new(key, AES.MODE_CFB, iv)
+    # # 加密
+    # str2 = cipher.encrypt(str1)
+    # print(str2)
+    # # 解密
+    # cipher = AES.new(key, AES.MODE_CFB, iv)
+    # str3 = cipher.decrypt(str2)
+    # print(str3.decode())
 
 
 if __name__ == '__main__':

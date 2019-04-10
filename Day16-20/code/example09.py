@@ -1,36 +1,66 @@
 """
-装饰器 - 背后的设计模式是代理模式(注意不是装饰器模式)
-代理模式通常是让代理对象去执行被代理对象的行为并在这个过程中增加额外的操作
-这种设计模式最适合处理代码中的横切关注功能(与正常业务没有必然联系但是又需要执行的功能)
+装饰器 - 装饰器中放置的通常都是横切关注（cross-concern）功能
+所谓横切关注功能就是很多地方都会用到但跟正常业务又逻辑没有必然联系的功能
+装饰器实际上是实现了设计模式中的代理模式 - AOP（面向切面编程）
 """
 from functools import wraps
-from time import time
+from random import randint
+from time import time, sleep
+
+import pymysql
 
 
-def record(output=print):
-    
+def record(output):
+
     def decorate(func):
-        
+
         @wraps(func)
         def wrapper(*args, **kwargs):
             start = time()
-            result = func(*args, **kwargs)
+            ret_value = func(*args, **kwargs)
             output(func.__name__, time() - start)
-            return result
-            
+            return ret_value
+
         return wrapper
-    
+
     return decorate
 
 
-@record()
-def some_task():
-    print(123 ** 100000)
+def output_to_console(fname, duration):
+    print('%s: %.3f秒' % (fname, duration))
+
+
+def output_to_file(fname, duration):
+    with open('log.txt', 'a') as file_stream:
+        file_stream.write('%s: %.3f秒\n' % (fname, duration))
+
+
+def output_to_db(fname, duration):
+    con = pymysql.connect(host='localhost', port=3306,
+                          database='test', charset='utf8',
+                          user='root', password='123456',
+                          autocommit=True)
+    try:
+        with con.cursor() as cursor:
+            cursor.execute('insert into tb_record values (default, %s, %s)',
+                           (fname, '%.3f' % duration))
+    finally:
+        con.close()
+
+
+@record(output_to_console)
+def random_delay(min, max):
+    sleep(randint(min, max))
+
+
+def main():
+    for _ in range(3):
+        # print(random_delay.__name__)
+        random_delay(3, 5)
+    # for _ in range(3):
+    #     # 取消掉装饰器
+    #     random_delay.__wrapped__(3, 5)
 
 
 if __name__ == '__main__':
-    some_task()
-    print(some_task.__name__)
-    # 取消装饰器
-    some_task = some_task.__wrapped__
-    some_task()
+    main()

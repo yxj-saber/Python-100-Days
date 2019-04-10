@@ -1,36 +1,23 @@
 """
-自定义迭代器
+变量的作用域以及Python搜索变量的顺序
+LEGB: Local --> Embedded --> Global --> Built-in
+global - 声明或定义全局变量（要么直接使用现有的全局作用域的变量，要么定义一个变量放到全局作用域）
+nonlocal - 声明使用嵌套作用域的变量（如果嵌套作用域没有对应的变量直接报错）
 """
+x = 100
 
 
-class Fibo:
-    """斐波拉切数列迭代器"""
+def foo():
+    global x
+    x = 200
 
-    def __init__(self, num):
-        self.num = num
-        self.a, self.b = 0, 1
-        self.idx = 0
+    def bar():
+        x = 300
+        print(x)
 
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.idx < self.num:
-            self.a, self.b = self.b, self.a + self.b
-            self.idx += 1
-            return self.a
-        raise StopIteration()
+    bar()
+    print(x)
 
 
-def main():
-    """主函数"""
-    for val in Fibo(10):
-        print(val)
-    print('-' * 10)
-    fibo_iter = Fibo(10)
-    for _ in range(10):
-        print(next(fibo_iter))
-
-
-if __name__ == '__main__':
-    main()
+foo()
+print(x)
